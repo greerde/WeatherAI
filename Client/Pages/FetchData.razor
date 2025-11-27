@@ -1,5 +1,8 @@
 ﻿@page "/fetchdata"
 @using BlazorApp.Shared 
+@using OpenMeteo
+@using System.Net.Http.Json
+
 @inject HttpClient Http
 
 <PageTitle>Weather</PageTitle>
@@ -35,11 +38,16 @@ else
             }
         </tbody>
     </table>
+
+<br/>
+    <h3>Raw Weather Data by DEG:</h3>
+    <pre>@wxdata</pre>
+
 }
 
 @code {
     private WeatherForecast[] forecasts = new WeatherForecast[]{};
-
+    private string wxdata = "";
     protected override async Task OnInitializedAsync()
     {
         try
@@ -50,5 +58,36 @@ else
         {
             Console.WriteLine(ex.ToString());
         }
+
+        //wxdata = await Http.GetStringAsync("/api/WeatherForecast/raw");
+        
+        //string url = "https://api.open-meteo.com/v1/forecast?latitude=38.221918&longitude=-76.614918&past_days=10&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m";
+        
+        //using (HttpClient client = new HttpClient())
+        //{
+            //wxdata = await client.GetStringAsync(url);
+        //}
+     
+            OpenMeteoClient client = new OpenMeteo.OpenMeteoClient();
+            string location = "Tokyo";
+            var weatherData = await client.QueryWeatherApiAsync(location);
+
+
+
+        //var client = new OpenMeteo.OpenMeteoClient();
+        //var weatherData = await client.QueryWeatherApiAsync("Tokyo");
+
+            if (weatherData == null)
+            {
+                wxdata = "No weather data returned";
+                return;
+            }
+            else if (weatherData.Current != null && weatherData.CurrentUnits != null)
+            {            
+                wxdata = "Weather in Toyko: " + weatherData.Current.Temperature + weatherData.CurrentUnits.Temperature;
+                return;
+            }
+
+
     }
-}
+}   
